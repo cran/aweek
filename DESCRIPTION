@@ -1,6 +1,6 @@
 Package: aweek
 Title: Convert Dates to Arbitrary Week Definitions
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: person(c("Zhian N."), "Kamvar", email = "zkamvar@gmail.com", role = c("aut", "cre"))
 Description: Which day a week starts depends heavily on the either the local or
   professional context. This package is designed to be a lightweight solution
@@ -15,8 +15,8 @@ URL: https://github.com/reconhub/aweek
 BugReports: https://github.com/reconhub/aweek/issues
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2019-03-03 20:38:04 UTC; zhian
+Packaged: 2019-03-08 17:23:51 UTC; zkamvar
 Author: Zhian N. Kamvar [aut, cre]
 Maintainer: Zhian N. Kamvar <zkamvar@gmail.com>
 Repository: CRAN
-Date/Publication: 2019-03-06 15:10:02 UTC
+Date/Publication: 2019-03-08 23:12:31 UTC

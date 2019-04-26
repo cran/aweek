@@ -31,7 +31,7 @@ print(dwf <- week2date(wf))
 weekdays(dwf)
 
 ## ----factors-------------------------------------------------------------
-date2week(dat[1] + c(0, 15), week_start = 1, factor = TRUE)
+dat[1] + c(0, 15)
 date2week(dat[1] + c(0, 15), week_start = 1, factor = TRUE, floor_day = TRUE)
 
 ## ----week2week, R.options=list(width = 100)-------------------------------------------------------

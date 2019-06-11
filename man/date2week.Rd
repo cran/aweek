@@ -5,10 +5,10 @@
 \alias{week2date}
 \title{Convert date to a an arbitrary week definition}
 \usage{
-date2week(x, week_start = 1, floor_day = FALSE, numeric = FALSE,
-  factor = FALSE, ...)
+date2week(x, week_start = get_week_start(), floor_day = factor,
+  numeric = FALSE, factor = FALSE, ...)
 
-week2date(x, week_start = 1, floor_day = FALSE)
+week2date(x, week_start = get_week_start(), floor_day = FALSE)
 }
 \arguments{
 \item{x}{a \link{Date}, \link{POSIXt}, \link{character}, or any data that can be easily
@@ -17,7 +17,8 @@ converted to a date with \code{\link[=as.POSIXlt]{as.POSIXlt()}}.}
 \item{week_start}{a number indicating the start of the week based on the ISO
 8601 standard from 1 to 7 where 1 = Monday OR an abbreviation of the
 weekdate in an English or current locale. \emph{Note: using a non-English locale
-may render your code non-portable.}}
+may render your code non-portable.} Defaults to the value of
+\code{\link[=get_week_start]{get_week_start()}}}
 
 \item{floor_day}{when \code{TRUE}, the days will be set to the start of the week.}
 
@@ -33,6 +34,17 @@ using this with a large date range as the resulting factor can contain all
 days between dates}.}
 
 \item{...}{arguments passed to \code{\link[=as.POSIXlt]{as.POSIXlt()}}, unused in all other cases.}
+}
+\value{
+\itemize{
+\item \code{date2week()} an \link[=aweek-class]{aweek} object which represents dates in
+\code{YYYY-Www-d} format where \code{YYYY} is the year (associated with the week,
+not necessarily the day), \code{Www} is the week number prepended by a "W" that
+ranges from 01-53 and \code{d} is the day of the week from 1 to 7 where 1
+represents the first day of the week (as defined by the \code{week_start}
+attribute).
+\item \code{week2date()} a \link{Date} object.
+}
 }
 \description{
 Convert date to a an arbitrary week definition
@@ -71,6 +83,12 @@ print(dat <- as.Date("2018-12-31") + -6:7)
 # By default, the weeks are defined as ISO weeks, which start on Monday
 print(iso_dat <- date2week(dat))
 
+# This can be changed by setting the global default with set_week_start()
+
+set_week_start("Sunday")
+
+date2week(dat)
+
 # If you want lubridate-style numeric-only weeks, you need look no further
 # than the "numeric" argument
 date2week(dat, numeric = TRUE)
@@ -82,13 +100,21 @@ date2week(dat, floor_day = TRUE)
 # `floor_day = TRUE, factor = TRUE`:
 date2week(dat[c(1, 14)], floor_day = TRUE, factor = TRUE)
 
+
 ## Weeks to dates -----------------------------------------------------------
 
 # The aweek class can be converted back to a date with `as.Date()`
 as.Date(iso_dat)
 
-# If you don't have an aweek class, you can use week2date():
-week2date("2019-W01-1", week_start = "Monday")
+# If you don't have an aweek class, you can use week2date(). Note that the
+# week_start variable is set by the "aweek.week_start" option, which we will
+# set to Monday:
+
+set_week_start("Monday")
+week2date("2019-W01-1") # 2018-12-31
+
+# This can be overidden by the week_start argument;
+week2date("2019-W01-1", week_start = "Sunday") # 2018-12-30
 
 # If you want to convert to the first day of the week, you can use the 
 # `floor_day` argument
@@ -124,7 +150,8 @@ date2week(dat, 7)
 date2week(dat, "Sunday")
 }
 \seealso{
-\code{\link[=as.Date.aweek]{as.Date.aweek()}}, \code{\link[=print.aweek]{print.aweek()}}
+\code{\link[=set_week_start]{set_week_start()}}, \code{\link[=as.Date.aweek]{as.Date.aweek()}}, \code{\link[=print.aweek]{print.aweek()}}, \code{\link[=as.aweek]{as.aweek()}},
+\code{\link[=get_aweek]{get_aweek()}}
 }
 \author{
 Zhian N. Kamvar

@@ -6,7 +6,8 @@
 #' @param week_start a number indicating the start of the week based on the ISO
 #'   8601 standard from 1 to 7 where 1 = Monday OR an abbreviation of the
 #'   weekdate in an English or current locale. _Note: using a non-English locale
-#'   may render your code non-portable._
+#'   may render your code non-portable._ Defaults to the value of 
+#'   [get_week_start()]
 #' 
 #' @param floor_day when `TRUE`, the days will be set to the start of the week.
 #'
@@ -36,6 +37,15 @@
 #'   non-standard start dates. This package provides a lightweight utility to
 #'   be able to convert each day.
 #'
+#' @return
+#'  - `date2week()` an [aweek][aweek-class] object which represents dates in
+#'    `YYYY-Www-d` format where `YYYY` is the year (associated with the week,
+#'    not necessarily the day), `Www` is the week number prepended by a "W" that
+#'    ranges from 01-53 and `d` is the day of the week from 1 to 7 where 1
+#'    represents the first day of the week (as defined by the `week_start`
+#'    attribute).
+#'  - `week2date()` a [Date][Date] object.  
+#' 
 #' @note `date2week()` will initially convert the input with [as.POSIXlt()] and
 #'   use that to calculate the week. If the user supplies character input, it
 #'   is expected that the input will be of the format yyyy-mm-dd _unless_ the 
@@ -45,7 +55,8 @@
 #'
 #' @author Zhian N. Kamvar
 #' @export
-#' @seealso [as.Date.aweek()], [print.aweek()]
+#' @seealso [set_week_start()], [as.Date.aweek()], [print.aweek()], [as.aweek()],
+#'   [get_aweek()]
 #' @examples
 #'
 #' ## Dates to weeks -----------------------------------------------------------
@@ -57,6 +68,12 @@
 #' 
 #' # By default, the weeks are defined as ISO weeks, which start on Monday
 #' print(iso_dat <- date2week(dat))
+#' 
+#' # This can be changed by setting the global default with set_week_start()
+#' 
+#' set_week_start("Sunday")
+#'
+#' date2week(dat)
 #'
 #' # If you want lubridate-style numeric-only weeks, you need look no further
 #' # than the "numeric" argument
@@ -69,13 +86,21 @@
 #' # `floor_day = TRUE, factor = TRUE`:
 #' date2week(dat[c(1, 14)], floor_day = TRUE, factor = TRUE)
 #'
+#'
 #' ## Weeks to dates -----------------------------------------------------------
 #'
 #' # The aweek class can be converted back to a date with `as.Date()`
 #' as.Date(iso_dat)
 #' 
-#' # If you don't have an aweek class, you can use week2date():
-#' week2date("2019-W01-1", week_start = "Monday")
+#' # If you don't have an aweek class, you can use week2date(). Note that the
+#' # week_start variable is set by the "aweek.week_start" option, which we will
+#' # set to Monday:
+#' 
+#' set_week_start("Monday")
+#' week2date("2019-W01-1") # 2018-12-31
+#'
+#' # This can be overidden by the week_start argument;
+#' week2date("2019-W01-1", week_start = "Sunday") # 2018-12-30
 #'
 #' # If you want to convert to the first day of the week, you can use the 
 #' # `floor_day` argument
@@ -109,10 +134,14 @@
 #' # Epiweek definition: Sunday -- 7 
 #' date2week(dat, 7)
 #' date2week(dat, "Sunday")
-date2week <- function(x, week_start = 1, floor_day = FALSE, numeric = FALSE, factor = FALSE, ...) {
+date2week <- function(x, week_start = get_week_start(), floor_day = factor, numeric = FALSE, factor = FALSE, ...) {
 
+  # Cromulence checks ----------------------------------------------------------
   format_exists <- !is.null(list(...)$format)
-  nas <- is.na(x)
+  nas  <- is.na(x)
+  nams <- names(x)
+
+  week_start <- parse_week_start(week_start)
 
   if (!inherits(x, "aweek") && is.character(x) && !format_exists) {
     iso_std <- grepl("^[0-9]{4}[^[:alnum:]]+[01][0-9][^[:alnum:]]+[0-3][0-9]$", trimws(x))
@@ -124,6 +153,7 @@ date2week <- function(x, week_start = 1, floor_day = FALSE, numeric = FALSE, fac
       stop(sprintf(msg, x[!iso_std][1]))
     }
   }
+
   x  <- tryCatch(as.POSIXlt(x, ...), error = function(e) e)
 
   if (inherits(x, "error")) {
@@ -132,69 +162,63 @@ date2week <- function(x, week_start = 1, floor_day = FALSE, numeric = FALSE, fac
     stop(sprintf(msg, deparse(mc[["x"]]), x$message))
   }
 
-  if (is.character(week_start)) {
-    week_start <- weekday_from_char(week_start)
-  }
+  # Conversion from date to week -----------------------------------------------
+  #
+  # Step 1: Get the weekday as an integer in pseudo ISO 8601 ---------
+  wday     <- as.integer(x$wday) # weekdays in R run 0:6, 0 being Sunday
+  the_date <- as.Date.POSIXlt(x)
 
-  wday       <- as.integer(x$wday) + 1L # weekdays in R run 0:6, 0 being Sunday
-  week_start <- as.integer(week_start)
-
+  # Step 2: Find week and weekday ------------------------------------ 
+  # This part is important for accurately assessing the week. It shifts the date
+  # to the middle of the relative week so that it can accurately be counted.
+  # 
+  # If the weekday is in the first three days of the week, then the middle of
+  # the week is in the future, but if the weekday is in the last three days of
+  # the week, then the middle of the week has already past and the date needs
+  # to be shifted backward.
   wday     <- get_wday(wday, week_start)
-  the_date <- as.Date(x)
-  the_week_bounds <- the_date + (4L - wday)
-  the_week <- week_in_year(the_week_bounds)
-
-  # adjust for cases where the year is different than the date
-  december <- format(the_date, "%m") == "12"
-  january  <- format(the_date, "%m") == "01"
-  boundary_adjustment <- integer(length(the_date))
-  
-  # Shift the year backwards if the date is in january, but the week is not
-  boundary_adjustment[january  & the_week >= 52] <- -1L
-
-  # Shift the year forwards if the date is in december, but it's the first week
-  boundary_adjustment[december & the_week == 1]  <- 1L
+  midweek  <- the_date + (4L - wday)
+  the_week <- week_in_year(midweek)
 
   if (!numeric) {
+    # Adding years to weeks ----------------------------------------------------
+    # Step 1: find the months of each date -----------------------------
+    december <- format(the_date, "%m") == "12"
+    january  <- format(the_date, "%m") == "01"
+    boundary_adjustment <- integer(length(the_date))
+    
+    # Step 2: Shift the years based on month/week agreement ------------
+    # Shift the year backwards if the date is in january, but the week is not
+    boundary_adjustment[january  & the_week >= 52] <- -1L
+    # Shift the year forwards if the date is in december, but it's the first week
+    boundary_adjustment[december & the_week == 1]  <- 1L
+
+    # Step 3: Create ISO week strings ----------------------------------
     the_year <- as.integer(format(the_date, "%Y"))
     the_week <- sprintf("%04d-W%02d-%d", 
                         the_year + boundary_adjustment,
                         the_week,
                         wday
                        )
-    # set the missing data back to missing
+    # set the missing data back to missing -----------------------------
     the_week[nas] <- NA
+
+    class(the_week) <- c("aweek", oldClass(the_week))
+    attr(the_week, "week_start") <- week_start 
+
     if (floor_day) {
-      the_week <- gsub("-\\d", "", the_week)
+      the_week <- trunc(the_week)
     }
 
     if (factor) {
       if (!floor_day) {
-        msg <- "In future versions of aweek, `factor = TRUE` must also include"
-        msg <- paste(msg, "`floor_day = TRUE`")
-        message(msg)
+        stop("as of aweek 1.0, using factor without floor_day is not allowed.")
       }
-      # find the minimum and maximum dates
-      dmin   <- which.min(the_date)
-      dmax   <- which.max(the_date)
-      drange <- the_week[c(dmin, dmax)]
-      # convert back to dates to get the first days of the week
-      drange <- week2date(drange, week_start = week_start)
-      # create the sequence from the first week to the last week
-      lvls   <- seq.Date(drange[1], drange[2], by = if (floor_day) 7L else 1)
-      # convert to weeks to use for levels
-      lvls   <- date2week(lvls, 
-                            week_start = week_start, 
-                            floor_day = floor_day,
-                            factor = FALSE,
-                            numeric = FALSE)
-      # convert to factor
-      the_week <- factor(the_week, levels = lvls)
+      the_week <- factor_aweek(the_week)
     }
-    # add the class attributes
-    class(the_week) <- c("aweek", oldClass(the_week))
-    attr(the_week, "week_start") <- week_start 
+
   }
+  names(the_week) <- names(x)
   the_week
 }
 

@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 
-<meta name="date" content="2019-06-11" />
+<meta name="date" content="2020-04-28" />
 
 <title>aweek means ‘any week’</title>
 
@@ -95,7 +95,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
       if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -116,9 +116,6 @@ padding-right: 2em;
 font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 font-size: 14px;
 line-height: 1.35;
-}
-#header {
-text-align: center;
 }
 #TOC {
 clear: both;
@@ -287,7 +284,8 @@ code > span.st { color: #d14; }
 code > span.co { color: #888888; font-style: italic; } 
 code > span.ot { color: #007020; } 
 code > span.al { color: #ff0000; font-weight: bold; } 
-code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
 </style>
 
 
@@ -301,7 +299,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 
 <h1 class="title toc-ignore">aweek means ‘any week’</h1>
-<h4 class="date">2019-06-11</h4>
+<h4 class="date">2020-04-28</h4>
 
 
 <div id="TOC">
@@ -477,8 +475,8 @@ class(x) &lt;- &quot;aweek&quot;</code></pre>
 <p>If you already have an aweek object and want to convert it to a factor, you can use <code>factor_aweek()</code>:</p>
 <div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb44-1" data-line-number="1"><span class="kw">factor_aweek</span>(w)</a></code></pre></div>
 <pre><code>## &lt;aweek start: Sunday&gt;
-##  [1] 2019-W11 2019-W10 2019-W09 2019-W09 2019-W09 2019-W09 2019-W10
-##  [8] 2019-W09 2019-W10 2019-W09
+##  [1] 2019-W11 2019-W10 2019-W09 2019-W09 2019-W09 2019-W09 2019-W10 2019-W09
+##  [9] 2019-W10 2019-W09
 ## Levels: 2019-W09 2019-W10 2019-W11</code></pre>
 <p>Be careful when combining factors with other dates or aweek objects as they will force the other objects to be truncated as well.</p>
 </div>
@@ -685,11 +683,14 @@ class(x) &lt;- &quot;aweek&quot;</code></pre>
 <pre><code>##  [1] &quot;2019-03-10&quot; &quot;2019-03-05&quot; &quot;2019-02-27&quot; &quot;2019-03-01&quot; &quot;2019-02-28&quot;
 ##  [6] &quot;2019-02-25&quot; &quot;2019-03-03&quot; &quot;2019-02-25&quot; &quot;2019-03-03&quot; &quot;2019-03-02&quot;</code></pre>
 <div class="sourceCode" id="cb100"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb100-1" data-line-number="1"><span class="kw">as.POSIXlt</span>(w)</a></code></pre></div>
-<pre><code>##  [1] &quot;2019-03-10 GMT&quot; &quot;2019-03-05 GMT&quot; &quot;2019-02-27 GMT&quot; &quot;2019-03-01 GMT&quot;
-##  [5] &quot;2019-02-28 GMT&quot; &quot;2019-02-25 GMT&quot; &quot;2019-03-03 GMT&quot; &quot;2019-02-25 GMT&quot;
-##  [9] &quot;2019-03-03 GMT&quot; &quot;2019-03-02 GMT&quot;</code></pre>
+<pre><code>##  [1] &quot;2019-03-10 PST&quot; &quot;2019-03-05 PST&quot; &quot;2019-02-27 PST&quot; &quot;2019-03-01 PST&quot;
+##  [5] &quot;2019-02-28 PST&quot; &quot;2019-02-25 PST&quot; &quot;2019-03-03 PST&quot; &quot;2019-02-25 PST&quot;
+##  [9] &quot;2019-03-03 PST&quot; &quot;2019-03-02 PST&quot;</code></pre>
 </div>
 
+
+
+<!-- code folding -->
 
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
